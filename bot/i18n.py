@@ -5,7 +5,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "start_prompt": (
             "Выберите препараты, о появлении которых в наличии хотите узнавать.\n"
             "Нажмите на нужные, затем «Готово». Список можно поменять в любой момент "
-            "командой /start."
+            "командой /start.\n\n"
+            "Бот автоматически пришлет вам уведомление, как только препарат будет в наличии"
         ),
         "btn_done": "✅ Готово",
         "watchlist_summary": "Буду уведомлять о появлении в наличии:\n{items}",
@@ -28,7 +29,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "start_prompt": (
             "Choose the products you'd like to be notified about when they're back in "
             "stock.\nTap the ones you want, then \"Done\". You can change the list "
-            "anytime with /start."
+            "anytime with /start.\n\n"
+            "The bot will automatically send you a notification as soon as the medication is in stock"
         ),
         "btn_done": "✅ Done",
         "watchlist_summary": "You'll be notified when these are back in stock:\n{items}",
