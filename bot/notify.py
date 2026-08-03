@@ -1,7 +1,7 @@
 import logging
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramAPIError
+from aiogram.exceptions import TelegramAPIError, TelegramForbiddenError
 
 from bot import db
 from bot.currency import get_eur_rub_rate
@@ -43,5 +43,8 @@ async def send_stock_notification(bot: Bot, snapshot: ProductSnapshot) -> None:
     for chat_id in chat_ids:
         try:
             await bot.send_message(chat_id, message)
+        except TelegramForbiddenError:
+            logger.info("chat_id=%s blocked the bot, removing their subscriptions", chat_id)
+            await db.delete_subscriptions_for_chat(chat_id)
         except TelegramAPIError as exc:
             logger.warning("Failed to notify chat_id=%s: %s", chat_id, exc)

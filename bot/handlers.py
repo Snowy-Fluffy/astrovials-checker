@@ -12,7 +12,7 @@ from aiogram.types import (
 from bot import db
 from bot.currency import get_eur_rub_rate
 from bot.i18n import t
-from bot.products import PRODUCTS
+from bot.products import PRODUCTS, PRODUCTS_BY_SLUG
 
 router = Router()
 
@@ -39,6 +39,9 @@ async def cmd_start(message: Message) -> None:
 @router.callback_query(lambda c: c.data and c.data.startswith("toggle:"))
 async def cb_toggle(callback: CallbackQuery) -> None:
     slug = callback.data.split(":", 1)[1]
+    if slug not in PRODUCTS_BY_SLUG:
+        await callback.answer()
+        return
     await db.toggle_subscription(callback.message.chat.id, slug)
     keyboard = await _build_keyboard(callback.message.chat.id)
     await callback.message.edit_reply_markup(reply_markup=keyboard)

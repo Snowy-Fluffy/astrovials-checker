@@ -56,6 +56,16 @@ the last successful check.
 | `CURRENCY_REFRESH_SECONDS` | 3600 | How often to refresh the EUR→RUB rate |
 | `LOCALE` | ru | Bot language: `ru` or `en` |
 
+## Networking note
+
+`docker-compose.yml` sets `network_mode: bridge`, i.e. the bot container
+joins Docker's default `bridge` network instead of a project-specific one.
+This was needed to work around a sandboxed environment where custom
+Docker networks had no outbound internet access. On a normal server this
+usually isn't necessary — if outbound internet works for regular
+Compose-created networks on your machine, you can safely delete that line
+to get the default (better-isolated) per-project network back.
+
 ## Stopping
 
 ```

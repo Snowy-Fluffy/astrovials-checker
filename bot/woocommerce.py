@@ -56,20 +56,28 @@ async def fetch_tracked_products() -> dict[str, ProductSnapshot] | None:
         logger.exception("Unexpected error fetching WooCommerce store API")
         return None
 
-    snapshots: dict[str, ProductSnapshot] = {}
-    for item in data:
-        slug = item.get("slug")
-        if slug not in PRODUCTS_BY_SLUG:
-            continue
-        prices = item.get("prices") or {}
-        stock_text = (item.get("stock_availability") or {}).get("text")
-        snapshots[slug] = ProductSnapshot(
-            slug=slug,
-            name=PRODUCTS_BY_SLUG[slug].name,
-            is_in_stock=bool(item.get("is_in_stock")),
-            price_eur=_extract_price_eur(prices),
-            quantity=_extract_quantity(stock_text),
-        )
+    if not isinstance(data, list):
+        logger.warning("Unexpected WooCommerce store API response shape: %r", type(data))
+        return None
+
+    try:
+        snapshots: dict[str, ProductSnapshot] = {}
+        for item in data:
+            slug = item.get("slug")
+            if slug not in PRODUCTS_BY_SLUG:
+                continue
+            prices = item.get("prices") or {}
+            stock_text = (item.get("stock_availability") or {}).get("text")
+            snapshots[slug] = ProductSnapshot(
+                slug=slug,
+                name=PRODUCTS_BY_SLUG[slug].name,
+                is_in_stock=bool(item.get("is_in_stock")),
+                price_eur=_extract_price_eur(prices),
+                quantity=_extract_quantity(stock_text),
+            )
+    except (AttributeError, TypeError):
+        logger.exception("Failed to parse WooCommerce store API response")
+        return None
 
     missing = set(PRODUCTS_BY_SLUG) - set(snapshots)
     if missing:
