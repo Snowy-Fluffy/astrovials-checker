@@ -12,7 +12,9 @@ from aiogram.types import (
 from bot import db
 from bot.currency import get_eur_rub_rate
 from bot.i18n import t
+from bot.notify import send_already_in_stock_notification
 from bot.products import PRODUCTS, PRODUCTS_BY_SLUG
+from bot.woocommerce import ProductSnapshot
 
 router = Router()
 
@@ -42,10 +44,23 @@ async def cb_toggle(callback: CallbackQuery) -> None:
     if slug not in PRODUCTS_BY_SLUG:
         await callback.answer()
         return
-    await db.toggle_subscription(callback.message.chat.id, slug)
-    keyboard = await _build_keyboard(callback.message.chat.id)
+    chat_id = callback.message.chat.id
+    now_subscribed = await db.toggle_subscription(chat_id, slug)
+    keyboard = await _build_keyboard(chat_id)
     await callback.message.edit_reply_markup(reply_markup=keyboard)
     await callback.answer()
+
+    if now_subscribed:
+        state = await db.get_product_state(slug)
+        if state and state["is_in_stock"]:
+            snapshot = ProductSnapshot(
+                slug=slug,
+                name=state["name"],
+                is_in_stock=True,
+                price_eur=state["price_eur"],
+                quantity=state["quantity"],
+            )
+            await send_already_in_stock_notification(callback.bot, chat_id, snapshot)
 
 
 @router.callback_query(lambda c: c.data == "done")

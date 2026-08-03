@@ -19,11 +19,11 @@ def _format_rub(price_eur: float, rate: float | None) -> str:
     return t("notify_rub", rub=f"{rub:,.0f}".replace(",", " "))
 
 
-async def _build_message(snapshot: ProductSnapshot) -> str:
+async def _build_message(snapshot: ProductSnapshot, title_key: str) -> str:
     product = PRODUCTS_BY_SLUG[snapshot.slug]
     rate = await get_eur_rub_rate()
 
-    lines = [t("notify_title"), "", product.name]
+    lines = [t(title_key), "", product.name]
 
     if snapshot.price_eur is not None:
         rub_part = _format_rub(snapshot.price_eur, rate)
@@ -36,15 +36,24 @@ async def _build_message(snapshot: ProductSnapshot) -> str:
     return "\n".join(lines)
 
 
+async def _send_to_chat(bot: Bot, chat_id: int, message: str) -> None:
+    try:
+        await bot.send_message(chat_id, message)
+    except TelegramForbiddenError:
+        logger.info("chat_id=%s blocked the bot, removing their subscriptions", chat_id)
+        await db.delete_subscriptions_for_chat(chat_id)
+    except TelegramAPIError as exc:
+        logger.warning("Failed to notify chat_id=%s: %s", chat_id, exc)
+
+
 async def send_stock_notification(bot: Bot, snapshot: ProductSnapshot) -> None:
-    message = await _build_message(snapshot)
+    message = await _build_message(snapshot, "notify_title")
     chat_ids = await db.get_subscribers(snapshot.slug)
 
     for chat_id in chat_ids:
-        try:
-            await bot.send_message(chat_id, message)
-        except TelegramForbiddenError:
-            logger.info("chat_id=%s blocked the bot, removing their subscriptions", chat_id)
-            await db.delete_subscriptions_for_chat(chat_id)
-        except TelegramAPIError as exc:
-            logger.warning("Failed to notify chat_id=%s: %s", chat_id, exc)
+        await _send_to_chat(bot, chat_id, message)
+
+
+async def send_already_in_stock_notification(bot: Bot, chat_id: int, snapshot: ProductSnapshot) -> None:
+    message = await _build_message(snapshot, "notify_already_title")
+    await _send_to_chat(bot, chat_id, message)
