@@ -1,3 +1,4 @@
+import html
 from datetime import datetime
 
 from aiogram import Router
@@ -90,15 +91,16 @@ async def cmd_status(message: Message) -> None:
 
     lines = [header, ""]
     for product in PRODUCTS:
+        name_html = f'<a href="{product.url}">{html.escape(product.name)}</a>'
         state = states.get(product.slug)
         if state is None:
-            lines.append(t("status_no_data", name=product.name))
+            lines.append(t("status_no_data", name=name_html))
             continue
 
         if state["is_in_stock"]:
-            line = f"✅ {product.name}"
+            line = f"✅ {name_html}"
         else:
-            line = f"❌ {t('status_out_of_stock')}: {product.name}"
+            line = f"❌ {t('status_out_of_stock')}: {name_html}"
         if state["price_eur"] is not None:
             price = state["price_eur"]
             rub_part = t("notify_rub", rub=f"{price * rate:,.0f}".replace(",", " ")) if rate else ""
@@ -107,4 +109,4 @@ async def cmd_status(message: Message) -> None:
             line += f", {state['quantity']} {t('unit_pcs')}"
         lines.append(line)
 
-    await message.answer("\n".join(lines))
+    await message.answer("\n".join(lines), parse_mode="HTML")
