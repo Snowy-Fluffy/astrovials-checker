@@ -8,7 +8,11 @@ from bot.products import PRODUCTS_BY_SLUG
 
 logger = logging.getLogger(__name__)
 
-_QUANTITY_RE = re.compile(r"(\d+)\s*in stock", re.IGNORECASE)
+_QUANTITY_PATTERNS = [
+    re.compile(r"only\s+(\d+)\s+left\s+in\s+stock", re.IGNORECASE),
+    re.compile(r"(\d+)\s+in\s+stock", re.IGNORECASE),
+    re.compile(r"(\d+)\s+left", re.IGNORECASE),
+]
 
 
 class ProductSnapshot:
@@ -20,11 +24,19 @@ class ProductSnapshot:
         self.quantity = quantity
 
 
-def _extract_quantity(stock_text: str | None) -> int | None:
+def _extract_quantity(item: dict) -> int | None:
+    low_stock_remaining = item.get("low_stock_remaining")
+    if isinstance(low_stock_remaining, int):
+        return low_stock_remaining
+
+    stock_text = (item.get("stock_availability") or {}).get("text")
     if not stock_text:
         return None
-    match = _QUANTITY_RE.search(stock_text)
-    return int(match.group(1)) if match else None
+    for pattern in _QUANTITY_PATTERNS:
+        match = pattern.search(stock_text)
+        if match:
+            return int(match.group(1))
+    return None
 
 
 def _extract_price_eur(prices: dict) -> float | None:
@@ -67,13 +79,12 @@ async def fetch_tracked_products() -> dict[str, ProductSnapshot] | None:
             if slug not in PRODUCTS_BY_SLUG:
                 continue
             prices = item.get("prices") or {}
-            stock_text = (item.get("stock_availability") or {}).get("text")
             snapshots[slug] = ProductSnapshot(
                 slug=slug,
                 name=PRODUCTS_BY_SLUG[slug].name,
                 is_in_stock=bool(item.get("is_in_stock")),
                 price_eur=_extract_price_eur(prices),
-                quantity=_extract_quantity(stock_text),
+                quantity=_extract_quantity(item),
             )
     except (AttributeError, TypeError):
         logger.exception("Failed to parse WooCommerce store API response")
