@@ -33,6 +33,22 @@ DB_PATH = os.environ.get("DB_PATH", "data/bot.db")
 _locale = os.environ.get("LOCALE", "ru").strip().lower()
 LOCALE = _locale if _locale in SUPPORTED_LOCALES else "ru"
 
+
+def _parse_admin_ids(value: str) -> set[int]:
+    ids = set()
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            ids.add(int(part))
+        except ValueError:
+            logger.warning("Invalid entry in ADMIN_USER_IDS: %r", part)
+    return ids
+
+
+ADMIN_USER_IDS = _parse_admin_ids(os.environ.get("ADMIN_USER_IDS", ""))
+
 WOOCOMMERCE_API_URL = "https://astrovials.com/wp-json/wc/store/v1/products"
 CURRENCY_API_URL = "https://www.cbr-xml-daily.ru/daily_json.js"
 

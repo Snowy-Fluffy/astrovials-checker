@@ -25,6 +25,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "status_out_of_stock": "нет в наличии",
         "cmd_start_description": "Выбрать препараты для отслеживания",
         "cmd_status_description": "Статус проверки и наличие препаратов",
+        "throttled_notice": "Слишком много команд подряд. Подождите {seconds} секунд и попробуйте снова.",
+        "broadcast_usage": "Использование: /broadcast <текст сообщения>",
+        "broadcast_starting": "Начинаю рассылку {count} пользователям...",
+        "broadcast_done": "Готово. Доставлено: {sent}, не доставлено: {failed}.",
     },
     "en": {
         "start_prompt": (
@@ -50,6 +54,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "status_out_of_stock": "not in stock",
         "cmd_start_description": "Choose products to track",
         "cmd_status_description": "Check status and stock summary",
+        "throttled_notice": "Too many commands in a row. Please wait {seconds} seconds and try again.",
+        "broadcast_usage": "Usage: /broadcast <message text>",
+        "broadcast_starting": "Starting broadcast to {count} users...",
+        "broadcast_done": "Done. Delivered: {sent}, failed: {failed}.",
     },
 }
 

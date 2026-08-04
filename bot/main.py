@@ -9,6 +9,7 @@ from bot.checker import run_checker_loop
 from bot.config import TELEGRAM_BOT_TOKEN
 from bot.handlers import router
 from bot.i18n import t
+from bot.throttling import ThrottlingMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,6 +27,10 @@ async def main() -> None:
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     dispatcher = Dispatcher()
     dispatcher.include_router(router)
+
+    throttling = ThrottlingMiddleware()
+    dispatcher.message.outer_middleware(throttling)
+    dispatcher.callback_query.outer_middleware(throttling)
 
     await bot.set_my_commands([
         BotCommand(command="start", description=t("cmd_start_description")),

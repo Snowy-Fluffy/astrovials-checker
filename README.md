@@ -13,6 +13,11 @@ the price in € and the converted price in ₽ (Bank of Russia rate).
   "out of stock → in stock" transition.
 - Bilingual: bot messages are available in Russian and English, selected via
   the `LOCALE` setting in `.env`.
+- Flood protection: broadcasts to subscribers are throttled and retry
+  automatically on Telegram rate limits; a user sending more than 10
+  commands/button presses within 60 seconds is muted for 30 seconds.
+- `/broadcast <text>` — admin-only (see `ADMIN_USER_IDS`), sends a custom
+  message to everyone who has ever run `/start`.
 
 Limitation: the site doesn't always expose the exact quantity in stock
 through the public API. The bot tries to extract a number from the stock
@@ -55,6 +60,7 @@ the last successful check.
 | `POLL_INTERVAL_SECONDS` | 60 | How often to check the site |
 | `CURRENCY_REFRESH_SECONDS` | 3600 | How often to refresh the EUR→RUB rate |
 | `LOCALE` | ru | Bot language: `ru` or `en` |
+| `ADMIN_USER_IDS` | — | Comma-separated Telegram user IDs allowed to use `/broadcast` (disabled if empty) |
 
 ## Stopping
 

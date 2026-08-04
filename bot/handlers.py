@@ -2,7 +2,7 @@ import html
 from datetime import datetime
 
 from aiogram import Router
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
@@ -11,9 +11,10 @@ from aiogram.types import (
 )
 
 from bot import db
+from bot.config import ADMIN_USER_IDS
 from bot.currency import get_eur_rub_rate
 from bot.i18n import t
-from bot.notify import send_already_in_stock_notification
+from bot.notify import broadcast, send_already_in_stock_notification
 from bot.products import PRODUCTS, PRODUCTS_BY_SLUG
 from bot.woocommerce import ProductSnapshot
 
@@ -110,3 +111,19 @@ async def cmd_status(message: Message) -> None:
         lines.append(line)
 
     await message.answer("\n".join(lines), parse_mode="HTML")
+
+
+@router.message(Command("broadcast"))
+async def cmd_broadcast(message: Message, command: CommandObject) -> None:
+    if message.from_user is None or message.from_user.id not in ADMIN_USER_IDS:
+        return
+
+    text = command.args
+    if not text:
+        await message.answer(t("broadcast_usage"))
+        return
+
+    chat_ids = await db.get_all_users()
+    await message.answer(t("broadcast_starting", count=len(chat_ids)))
+    sent, failed = await broadcast(message.bot, chat_ids, text)
+    await message.answer(t("broadcast_done", sent=sent, failed=failed))

@@ -86,9 +86,17 @@ async def toggle_subscription(chat_id: int, slug: str) -> bool:
         return True
 
 
-async def delete_subscriptions_for_chat(chat_id: int) -> None:
+async def get_all_users() -> list[int]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cursor = await db.execute("SELECT chat_id FROM users")
+        rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
+
+async def delete_user(chat_id: int) -> None:
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM subscriptions WHERE chat_id = ?", (chat_id,))
+        await db.execute("DELETE FROM users WHERE chat_id = ?", (chat_id,))
         await db.commit()
 
 
